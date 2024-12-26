@@ -23,18 +23,33 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverManager
 
 # Configure Chrome options for headless mode
-chrome_options = Options()
-chrome_options.add_argument('--headless')  # Run Chrome in headless mode
-chrome_options.add_argument('--disable-gpu')
-chrome_options.add_argument('--no-sandbox')  # Disable sandboxing to run in containers
-chrome_options.binary_location = "/usr/bin/chromium"  # Set the location of Chromium
+import streamlit as st
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.os_manager import ChromeType
 
-# Set the path for ChromeDriver using webdriver-manager
-service = Service(ChromeDriverManager().install())
+with st.echo():
+    # Set Chrome options
+    options = Options()
+    options.add_argument("--disable-gpu")
+    options.add_argument("--headless")  # Run Chrome in headless mode
 
-# Initialize WebDriver with the options and service
-driver = webdriver.Chrome(service=service, options=chrome_options)
+    @st.cache_resource
+    def get_driver():
+        try:
+            # Set up the WebDriver
+            service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+            driver = webdriver.Chrome(service=service, options=options)
+            return driver
+        except Exception as e:
+            st.error(f"Error initializing WebDriver: {e}")
+            return None
 
+    # Initialize WebDriver
+    driver = get_driver()
+    
 # Rest of your application code...
 
 
