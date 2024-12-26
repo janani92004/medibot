@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import random
-from IPython.display import Image, display, YouTubeVideo
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
