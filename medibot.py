@@ -23,12 +23,9 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverManager
 
 # Configure Chrome options for headless mode
-import streamlit as st
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.os_manager import ChromeType
+
+from webdriver_manager.core import ChromeType
+
 
 with st.echo():
     # Set Chrome options
