@@ -24,15 +24,15 @@ from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverMana
 
 # Configure Chrome options for headless mode
 chrome_options = Options()
-chrome_options.add_argument("--headless")  # Run in headless mode
-chrome_options.add_argument("--no-sandbox")  # For compatibility
-chrome_options.add_argument("--disable-dev-shm-usage")  # For compatibility
-chrome_options.add_argument("--disable-gpu")  # To prevent GPU issues in headless mode
+chrome_options.add_argument('--headless')  # Run Chrome in headless mode
+chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument('--no-sandbox')  # Disable sandboxing to run in containers
+chrome_options.binary_location = "/usr/bin/chromium"  # Set the location of Chromium
 
-# Use Service to specify the path to the chromedriver
+# Set the path for ChromeDriver using webdriver-manager
 service = Service(ChromeDriverManager().install())
 
-# Initialize WebDriver with the Service and Chrome options
+# Initialize WebDriver with the options and service
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 # Rest of your application code...
