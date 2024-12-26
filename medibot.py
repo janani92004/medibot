@@ -15,8 +15,14 @@ import requests
 import google.generativeai as genai
 import ast
 
-# Configure Gemini (add this near your imports)
-genai.configure(api_key='AIzaSyDDjCutEZobboVnlAqOjSLXQANWihZFBhI')
+import streamlit as st
+
+# Access the Google API key from the secrets
+api_key = st.secrets["google"]["api_key"]
+
+# Configure the API with the key
+genai.configure(api_key=api_key)
+
 model = genai.GenerativeModel('gemini-pro')
 
 # Load datasets
