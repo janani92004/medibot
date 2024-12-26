@@ -16,16 +16,19 @@ import ast
 from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverManager
 
 # At the start of your file, after imports
-st.set_page_config(layout="wide")  # Makes the page use full width
 
-# Selenium setup for headless mode
+
+# Configure Chrome options for headless mode
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Run in headless mode
-chrome_options.add_argument("--no-sandbox")  # Add this for compatibility on certain systems
-chrome_options.add_argument("--disable-dev-shm-usage")  # Disable usage of /dev/shm
+chrome_options.add_argument("--no-sandbox")  # For compatibility
+chrome_options.add_argument("--disable-dev-shm-usage")  # For compatibility
 
 # Initialize WebDriver with WebDriverManager for automatic driver management
-driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=chrome_options)
+
+# The rest of your code remains the same...
+
 
 # The rest of your code remains the same...
 
