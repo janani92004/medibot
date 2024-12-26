@@ -6,4 +6,4 @@ folium
 streamlit-folium
 requests
 google-generativeai
-webdriver-manager==3.8.5
+webdriver-manager==4.0.2
