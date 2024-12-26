@@ -24,7 +24,7 @@ from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverMana
 
 # Configure Chrome options for headless mode
 
-from webdriver_manager.core import ChromeType
+from webdriver_manager.core import ChromeType  # Corrected import
 
 
 with st.echo():
