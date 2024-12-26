@@ -137,7 +137,8 @@ with col1:  # Put main content in left column
         
         try:
             # Initialize the Firefox WebDriver
-            service = FirefoxService(executable_path='C:/Users/Windows/Desktop/project_Day/geckodriver.exe')  # Update this path
+            service = FirefoxService(executable_path='https://github.com/janani92004/medibot/blob/main/geckodriver.exe')
+  # Update this path
             driver = webdriver.Firefox(service=service, options=firefox_options)
             
             driver.get("https://www.youtube.com")
@@ -260,7 +261,7 @@ with col1:  # Put main content in left column
         
         try:
             # Initialize the Firefox WebDriver
-            service = FirefoxService(executable_path='C:/Users/Windows/Desktop/project_Day/geckodriver.exe')  # Update this path
+            service = FirefoxService(executable_path='https://github.com/janani92004/medibot/blob/main/geckodriver.exe')  # Update this path
             driver = webdriver.Firefox(service=service, options=firefox_options)
             driver.get("https://www.google.com")
             
@@ -426,7 +427,7 @@ with col1:  # Put main content in left column
         
         try:
             # Initialize the Firefox WebDriver
-            service = FirefoxService(executable_path='C:/Users/Windows/Desktop/project_Day/geckodriver.exe')  # Update this path
+            service = FirefoxService(executable_path='https://github.com/janani92004/medibot/blob/main/geckodriver.exe')  # Update this path
             driver = webdriver.Firefox(service=service, options=firefox_options)
             driver.get("https://www.google.com")
             
