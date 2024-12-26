@@ -1,0 +1,51 @@
+Preliminary_Disease_Diagnosis,Recommended_Medicine,Child,Adult,Senior
+Common Cold,Paracetamol,5 ml,15 ml,10 ml
+Influenza,Oseltamivir,2.5 ml,75 mg,75 mg
+Migraine,Ibuprofen,3 ml,10 ml,8 ml
+Strep Throat,Amoxicillin,250 mg,500 mg,500 mg
+Food Poisoning,Oral Rehydration Salts,"Up to 2 years old: Give 50-100 ml of ORS after each loose stool.
+2 to 10 years old: Give 100-200 ml of ORS after each loose stool.", Give as much ORS as wanted after each loose stool.," Give as much ORS as wanted after each loose stool, but monitor their symptoms due to age factor."
+Measles,Vitamin A,"0-6 months: 400 micrograms (mcg) of retinol activity equivalents (RAE) per day.
+7-12 months: 500 mcg RAE per day.
+1-3 years: 300 mcg RAE per day.
+4-8 years: 400 mcg RAE per day.
+9-13 years: 600 mcg RAE per day.","Men (14 years and older): 900 mcg RAE per day.
+Women (14 years and older): 700 mcg RAE per day.","Men : 900 mcg RAE per day.
+Women: 700 mcg RAE per day.However, absorption and metabolism of vitamins can change with age, so it’s important for seniors to monitor their intake and consult healthcare providers if there are any concerns about vitamin A levels."
+Pneumonia,Amoxicillin,Mild to Moderate Infections:  25-50 mg/kg/day in divided doses every 8 hours.,"Mild to Moderate Infections: 500 mg every 12 hours, or 250 mg every 8 hours.
+Severe Infections: 875 mg every 12 hours, or 500 mg every 8 hours.","Mild to Moderate Infections: 500 mg every 12 hours, or 250 mg every 8 hours. 
+Severe Infections: 875 mg every 12 hours, or 500 mg every 8 hours."
+Arthritis,Plaquenil,"Dosage: 3-6.5 mg/kg of body weight per day.
+Maximum Dose: Should not exceed 400 mg per day, regardless of body weight","Initial dose: 400-600 mg daily (may be divided into two doses).
+Maintenance dose: 200-400 mg daily (may be divided into two doses).","Initial dose: 400-600 mg daily (may be divided into two doses).
+Maintenance dose: 200-400 mg daily (may be divided into two doses). May need adjustment based on renal and liver function."
+Appendicitis,Surgery,N/A,N/A,N/A
+Tonsillitis,Amoxicillin,250 mg,500 mg,500 mg
+Vertigo,Antivertigo medication,5 ml,10 ml,10 ml
+Sciatica,Ibuprofen,"	3 ml","	400 mg",400 mg
+Dermatitis,Clobetasol ,Apply thin layer,Apply thin layer,Apply thin layer
+Asthma,Bronchodilators,2 puffs,2 puffs,2 puffs
+Gastroenteritis,Pepto-Bismol,5 ml,30 ml,30 ml
+Muscular Dystrophy,Prednisone,0.5 mg/kg,5-60 mg,5-60 mg
+Diabetes,Insulin,Based on blood glucose,Based on blood glucose,Based on blood glucose
+Anxiety Disorder,Antidepressants,Based on prescription,Based on prescription,Based on prescription
+Fibromyalgia,Tramadol,50-100 mg once per day,50-100 mg every 4-6 hours as needed (max 400 mg/day),50-100 mg every 4-6 hours as needed (max 400 mg/day)
+Sinusitis,Levofloxacin,10 mg/kg,500 mg,500 mg
+Glaucoma,Xalatan,1 drop in affected eye,1 drop in affected eye,1 drop in affected eye
+Hyperhidrosis,Antiperspirants,Apply as needed,Apply as needed,Apply as needed
+Hepatitis,Entecavir,0.5 mg,0.5 mg,0.5 mg
+Mononucleosis,Corticosteroids,Based on severity,Based on severity,Based on severity
+Anemia,Iron supplements,3 mg/kg,100-200 mg,100-200 mg
+Insomnia,Melatonin,1-3 mg,1-3 mg,1-3 mg
+Hypothyroidism,Levothyroxine,10-15 mcg/kg/day,1.6 mcg/kg/day,1.0 mcg/kg/day (start lower due to sensitivity)
+Leukemia,Chemotherapy,Chemotherapy as per oncology protocols,Chemotherapy as per oncology protocols,Chemotherapy as per oncology protocols
+Alzheimer's Disease,Medications for memory loss,Donepezil 5-10 mg once daily,Donepezil 5-10 mg once daily,Donepezil 5-10 mg once daily
+Multiple Sclerosis,Medications for nerve pain,Gabapentin 300 mg three times daily,Gabapentin 300 mg three times daily,Gabapentin 300 mg three times daily
+Gastritis,Antacids,Antacids as needed,10-20 ml or 1-2 tablets as needed after meals and at bedtime,10-20 ml or 1-2 tablets as needed after meals and at bedtime
+Heartburn,Antacids,Antacids as needed,10-20 ml or 1-2 tablets as needed after meals and at bedtime,10-20 ml or 1-2 tablets as needed after meals and at bedtime
+Eczema,Topical steroids,Hydrocortisone cream 1% applied twice daily,Hydrocortisone cream 1% applied twice daily,Hydrocortisone cream 1% applied twice daily
+Stroke,Tissue plasminogen activator (tPA),Treatment,Treatment,Treatment
+Osteoarthritis,Physiotherapy,Physiotherapy,Physiotherapy and Acetaminophen 1000 mg 3-4 times daily,Physiotherapy and Acetaminophen 1000 mg 3-4 times daily
+Malaria,Quinine,650 mg every 8 hours for 3-7 days,650 mg every 8 hours for 3-7 days,650 mg every 8 hours for 3-7 days
+Periods,Zerodol-P,NA,1 tablet twice daily,1 tablet twice daily
+Malaria,Antimalarial drugs,"Artemether-lumefantrine 20/120 mg, 2 tablets initially, then 2 tablets 8 hours later, then 2 tablets twice daily for 2 more days","Artemether-lumefantrine 20/120 mg, 4 tablets initially, then 4 tablets 8 hours later, then 4 tablets twice daily for 2 more days","Artemether-lumefantrine 20/120 mg, 4 tablets initially, then 4 tablets 8 hours later, then 4 tablets twice daily for 2 more days"
