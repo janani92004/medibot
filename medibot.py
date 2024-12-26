@@ -13,6 +13,7 @@ from streamlit_folium import folium_static
 import requests
 import google.generativeai as genai
 import ast
+from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverManager
 
 # At the start of your file, after imports
 st.set_page_config(layout="wide")  # Makes the page use full width
@@ -23,8 +24,11 @@ chrome_options.add_argument("--headless")  # Run in headless mode
 chrome_options.add_argument("--no-sandbox")  # Add this for compatibility on certain systems
 chrome_options.add_argument("--disable-dev-shm-usage")  # Disable usage of /dev/shm
 
-# Initialize WebDriver with the headless options
-driver = webdriver.Chrome(options=chrome_options)
+# Initialize WebDriver with WebDriverManager for automatic driver management
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+
+# The rest of your code remains the same...
+
 
 # Access the Google API key from the secrets
 api_key = st.secrets["google"]["api_key"]
