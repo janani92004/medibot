@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
+
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 from geopy.geocoders import Nominatim
 import folium
 from streamlit_folium import folium_static
@@ -132,15 +132,13 @@ with col1:  # Put main content in left column
         return None
 
     def search_youtube(query):
-        firefox_options = Options()
-        firefox_options.add_argument('--headless')  # Run in headless mode (no GUI)
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')  # Run in headless mode (no GUI)
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
         
         try:
-            # Initialize the Firefox WebDriver
-            service = FirefoxService(executable_path='https://github.com/janani92004/medibot/blob/main/geckodriver.exe')
-  # Update this path
-            driver = webdriver.Firefox(service=service, options=firefox_options)
-            
+            driver = webdriver.Chrome(options=chrome_options)
             driver.get("https://www.youtube.com")
             
             # Accept cookies if present
@@ -171,7 +169,6 @@ with col1:  # Put main content in left column
         except Exception as e:
             if 'driver' in locals():
                 driver.quit()
-            st.error(f"Error searching YouTube: {e}")
             return None
 
     def get_doctors_advice(diagnosis):
@@ -256,13 +253,13 @@ with col1:  # Put main content in left column
             }
 
     def search_and_format_hospitals():
-        firefox_options = Options()
-        firefox_options.add_argument('--headless')  # Run in headless mode (no GUI)
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
         
         try:
-            # Initialize the Firefox WebDriver
-            service = FirefoxService(executable_path='https://github.com/janani92004/medibot/blob/main/geckodriver.exe')  # Update this path
-            driver = webdriver.Firefox(service=service, options=firefox_options)
+            driver = webdriver.Chrome(options=chrome_options)
             driver.get("https://www.google.com")
             
             st.write("Searching for hospitals...")
@@ -282,7 +279,7 @@ with col1:  # Put main content in left column
             st.write(f"Found {len(places)} places")
             
             raw_hospitals = []
-            for place in places[:5]:  # Limit to the first 5 results
+            for place in places[:5]:
                 try:
                     name = place.find_element(By.CSS_SELECTOR, "div.dbg0pd").text
                     details = place.find_element(By.CSS_SELECTOR, "div.rllt__details").text
@@ -422,13 +419,13 @@ with col1:  # Put main content in left column
                 st.rerun()
 
     def search_and_format_medical_shops():
-        firefox_options = Options()
-        firefox_options.add_argument('--headless')  # Run in headless mode (no GUI)
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
         
         try:
-            # Initialize the Firefox WebDriver
-            service = FirefoxService(executable_path='https://github.com/janani92004/medibot/blob/main/geckodriver.exe')  # Update this path
-            driver = webdriver.Firefox(service=service, options=firefox_options)
+            driver = webdriver.Chrome(options=chrome_options)
             driver.get("https://www.google.com")
             
             st.write("Searching for medical shops...")
@@ -448,7 +445,7 @@ with col1:  # Put main content in left column
             st.write(f"Found {len(places)} places")
             
             raw_shops = []
-            for place in places[:5]:  # Limit to the first 5 results
+            for place in places[:5]:
                 try:
                     name = place.find_element(By.CSS_SELECTOR, "div.dbg0pd").text
                     details = place.find_element(By.CSS_SELECTOR, "div.rllt__details").text
