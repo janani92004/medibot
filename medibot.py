@@ -19,18 +19,24 @@ from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverMana
 
 
 # Configure Chrome options for headless mode
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+
+# Configure Chrome options for headless mode
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Run in headless mode
 chrome_options.add_argument("--no-sandbox")  # For compatibility
 chrome_options.add_argument("--disable-dev-shm-usage")  # For compatibility
 
-# Initialize WebDriver with WebDriverManager for automatic driver management
-driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=chrome_options)
+# Use Service to specify the path to the chromedriver
+service = Service(ChromeDriverManager().install())
 
-# The rest of your code remains the same...
+# Initialize WebDriver with the Service and Chrome options
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
 
-# The rest of your code remains the same...
 
 
 # Access the Google API key from the secrets
