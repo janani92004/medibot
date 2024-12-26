@@ -13,28 +13,28 @@ from streamlit_folium import folium_static
 import requests
 import google.generativeai as genai
 import ast
-from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverManager
-
-# At the start of your file, after imports
-
-
-# Configure Chrome options for headless mode
+import streamlit as st
+import pandas as pd
+import random
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverManager
 
 # Configure Chrome options for headless mode
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Run in headless mode
 chrome_options.add_argument("--no-sandbox")  # For compatibility
 chrome_options.add_argument("--disable-dev-shm-usage")  # For compatibility
+chrome_options.add_argument("--disable-gpu")  # To prevent GPU issues in headless mode
 
 # Use Service to specify the path to the chromedriver
 service = Service(ChromeDriverManager().install())
 
 # Initialize WebDriver with the Service and Chrome options
 driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# Rest of your application code...
 
 
 
