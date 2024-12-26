@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -15,8 +15,9 @@ import google.generativeai as genai
 import ast
 
 
-# Access the Google API key from the secrets
-api_key = st.secrets["google"]["api_key"]
+
+
+api_key = os.getenv("api_key")
 
 # Configure the API with the key
 genai.configure(api_key=api_key)
