@@ -1,55 +1,18 @@
-import os
 import streamlit as st
 import pandas as pd
-import random
 from selenium import webdriver
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 from geopy.geocoders import Nominatim
 import folium
 from streamlit_folium import folium_static
 import requests
 import google.generativeai as genai
 import ast
-import streamlit as st
-import pandas as pd
-import random
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager  # Import WebDriverManager
-
-# Configure Chrome options for headless mode
-
-from webdriver_manager.core import ChromeType  # Corrected import
-
-
-with st.echo():
-    # Set Chrome options
-    options = Options()
-    options.add_argument("--disable-gpu")
-    options.add_argument("--headless")  # Run Chrome in headless mode
-
-    @st.cache_resource
-    def get_driver():
-        try:
-            # Set up the WebDriver
-            service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
-            driver = webdriver.Chrome(service=service, options=options)
-            return driver
-        except Exception as e:
-            st.error(f"Error initializing WebDriver: {e}")
-            return None
-
-    # Initialize WebDriver
-    driver = get_driver()
-    
-# Rest of your application code...
-
-
 
 
 # Access the Google API key from the secrets
@@ -72,6 +35,14 @@ first_aid_dataset = pd.read_csv(first_aid_dataset_path, encoding='latin-1')
 # Initialize global DataFrames
 df_first_aid = pd.DataFrame(columns=['Date', 'Time', 'Emergency'])
 df_diagnosis = pd.DataFrame(columns=['Date', 'Time', 'Name', 'Age', 'Diagnosis', 'Recommendation'])
+
+# At the start of your file, after imports
+st.set_page_config(layout="wide")  # Makes the page use full width
+
+# Update the title styling
+st.markdown("""
+    <h1 style='text-align: left;'>Medi-bot: Your Personal Medical Chat-bot</h1>
+    """, unsafe_allow_html=True)
 
 # Wrap main content in columns for better spacing
 col1, col2, col3 = st.columns([2,1,1])  # Makes the first column wider
@@ -98,7 +69,6 @@ with col1:  # Put main content in left column
         st.session_state.show_hospitals = False
         st.session_state.show_medical_shops = False
         st.session_state.previous_task = user_choice
-
 
     # Function to provide emergency advice
     def provide_emergency_advice(user_emergency, dataset):
@@ -162,13 +132,14 @@ with col1:  # Put main content in left column
         return None
 
     def search_youtube(query):
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')  # Run in headless mode (no GUI)
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
+        firefox_options = Options()
+        firefox_options.add_argument('--headless')  # Run in headless mode (no GUI)
         
         try:
-            driver = webdriver.Chrome(options=chrome_options)
+            # Initialize the Firefox WebDriver
+            service = FirefoxService(executable_path='C:/Users/Windows/Desktop/project_Day/geckodriver.exe')  # Update this path
+            driver = webdriver.Firefox(service=service, options=firefox_options)
+            
             driver.get("https://www.youtube.com")
             
             # Accept cookies if present
@@ -199,6 +170,7 @@ with col1:  # Put main content in left column
         except Exception as e:
             if 'driver' in locals():
                 driver.quit()
+            st.error(f"Error searching YouTube: {e}")
             return None
 
     def get_doctors_advice(diagnosis):
@@ -283,13 +255,13 @@ with col1:  # Put main content in left column
             }
 
     def search_and_format_hospitals():
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
+        firefox_options = Options()
+        firefox_options.add_argument('--headless')  # Run in headless mode (no GUI)
         
         try:
-            driver = webdriver.Chrome(options=chrome_options)
+            # Initialize the Firefox WebDriver
+            service = FirefoxService(executable_path='C:/Users/Windows/Desktop/project_Day/geckodriver.exe')  # Update this path
+            driver = webdriver.Firefox(service=service, options=firefox_options)
             driver.get("https://www.google.com")
             
             st.write("Searching for hospitals...")
@@ -309,7 +281,7 @@ with col1:  # Put main content in left column
             st.write(f"Found {len(places)} places")
             
             raw_hospitals = []
-            for place in places[:5]:
+            for place in places[:5]:  # Limit to the first 5 results
                 try:
                     name = place.find_element(By.CSS_SELECTOR, "div.dbg0pd").text
                     details = place.find_element(By.CSS_SELECTOR, "div.rllt__details").text
@@ -449,13 +421,13 @@ with col1:  # Put main content in left column
                 st.rerun()
 
     def search_and_format_medical_shops():
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
+        firefox_options = Options()
+        firefox_options.add_argument('--headless')  # Run in headless mode (no GUI)
         
         try:
-            driver = webdriver.Chrome(options=chrome_options)
+            # Initialize the Firefox WebDriver
+            service = FirefoxService(executable_path='C:/Users/Windows/Desktop/project_Day/geckodriver.exe')  # Update this path
+            driver = webdriver.Firefox(service=service, options=firefox_options)
             driver.get("https://www.google.com")
             
             st.write("Searching for medical shops...")
@@ -475,7 +447,7 @@ with col1:  # Put main content in left column
             st.write(f"Found {len(places)} places")
             
             raw_shops = []
-            for place in places[:5]:
+            for place in places[:5]:  # Limit to the first 5 results
                 try:
                     name = place.find_element(By.CSS_SELECTOR, "div.dbg0pd").text
                     details = place.find_element(By.CSS_SELECTOR, "div.rllt__details").text
