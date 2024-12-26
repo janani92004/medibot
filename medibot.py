@@ -14,7 +14,17 @@ import requests
 import google.generativeai as genai
 import ast
 
-import streamlit as st
+# At the start of your file, after imports
+st.set_page_config(layout="wide")  # Makes the page use full width
+
+# Selenium setup for headless mode
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Run in headless mode
+chrome_options.add_argument("--no-sandbox")  # Add this for compatibility on certain systems
+chrome_options.add_argument("--disable-dev-shm-usage")  # Disable usage of /dev/shm
+
+# Initialize WebDriver with the headless options
+driver = webdriver.Chrome(options=chrome_options)
 
 # Access the Google API key from the secrets
 api_key = st.secrets["google"]["api_key"]
@@ -36,14 +46,6 @@ first_aid_dataset = pd.read_csv(first_aid_dataset_path, encoding='latin-1')
 # Initialize global DataFrames
 df_first_aid = pd.DataFrame(columns=['Date', 'Time', 'Emergency'])
 df_diagnosis = pd.DataFrame(columns=['Date', 'Time', 'Name', 'Age', 'Diagnosis', 'Recommendation'])
-
-# At the start of your file, after imports
-st.set_page_config(layout="wide")  # Makes the page use full width
-
-# Update the title styling
-st.markdown("""
-    <h1 style='text-align: left;'>Medi-bot: Your Personal Medical Chat-bot</h1>
-    """, unsafe_allow_html=True)
 
 # Wrap main content in columns for better spacing
 col1, col2, col3 = st.columns([2,1,1])  # Makes the first column wider
@@ -70,6 +72,7 @@ with col1:  # Put main content in left column
         st.session_state.show_hospitals = False
         st.session_state.show_medical_shops = False
         st.session_state.previous_task = user_choice
+
 
     # Function to provide emergency advice
     def provide_emergency_advice(user_emergency, dataset):
