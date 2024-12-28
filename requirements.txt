@@ -8,3 +8,4 @@ requests
 google-generativeai
 webdriver-manager==4.0.2
 streamlit-js-eval==0.1.5
+streamlit_geolocation
