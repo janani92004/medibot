@@ -1,16 +1,22 @@
 import streamlit as st
 import pandas as pd
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from geopy.geocoders import Nominatim
+import folium
+from streamlit_folium import folium_static
 import requests
 import google.generativeai as genai
+import ast
+from streamlit_geolocation import streamlit_geolocation 
+import time
 import os
-
-
+# Access the Google API key from the secrets
 # Configure Gemini (add this near your imports)
 api_key = os.getenv("api_key")
 
@@ -64,8 +70,6 @@ with col1:  # Put main content in left column
         st.session_state.show_hospitals = False
         st.session_state.show_medical_shops = False
         st.session_state.previous_task = user_choice
-    
-    
 
     # Function to provide emergency advice
     def provide_emergency_advice(user_emergency, dataset):
@@ -127,8 +131,6 @@ with col1:  # Put main content in left column
                     'Advice': matched_row['Recommended_Advice']
                 }
         return None
-    # Add this function near the top of your file, after your imports but before any other functions
-    
 
     def search_youtube(query):
         chrome_options = Options()
@@ -221,117 +223,59 @@ with col1:  # Put main content in left column
                 driver.quit()
             return None
 
-    def get_user_location():
-        try:
-            response = requests.get('https://ipapi.co/json/')
-            data = response.json()
-            return data['latitude'], data['longitude'], data['city']
-        except Exception as e:
-            st.error(f"Error getting location: {e}")
-            return None, None, None
 
-    def parse_hospital_details(raw_details, hospital_name):
-        prompt = f"""
-        Parse these hospital details and create a properly formatted response:
-        Hospital Name: {hospital_name}
-        Raw Details: {raw_details}
-        
-        Return only a dictionary in this exact format:
-        {{
-            'address': 'full address here',
-            'phone': 'phone number here',
-            'distance': 'distance here',
-            'directions': 'https://www.google.com/maps/dir/?api=1&destination=hospital+address+here'
-        }}
-        """
-        
+    def parse_hospital_details(raw_details):
         try:
-            response = model.generate_content(prompt)
-            # Clean and format the response
-            response_text = response.text.strip()
-            # Remove any markdown formatting if present
-            if response_text.startswith('```') and response_text.endswith('```'):
-                response_text = response_text[3:-3]
-            if response_text.startswith('python'):
-                response_text = response_text[6:]
-            
-            # Safely evaluate the dictionary string
-            import ast
-            result = ast.literal_eval(response_text)
+            # Assuming raw_details is a string representation of a dictionary
+            print("Raw details to parse:", raw_details)  # Debugging line
+            result = ast.literal_eval(raw_details)  # Ensure this is a valid Python literal
             
             # Verify the required keys are present
             required_keys = {'address', 'phone', 'distance', 'directions'}
             if not all(key in result for key in required_keys):
                 raise ValueError("Missing required keys in response")
-                
+            
             return result
         except Exception as e:
             st.error(f"Error parsing details: {e}")
-            # Return default values if parsing fails
             return {
-                'address': raw_details,
+                'address': "Address not available",
                 'phone': "Phone not available",
                 'distance': "Distance not available",
-                'directions': f"https://www.google.com/maps/search/?api=1&query={hospital_name.replace(' ', '+')}"
+                'directions': "Directions not available"
             }
 
-    # Cache to store user location
-    user_location_cache = {}
-    cache_duration = 3600  # Cache duration in seconds (1 hour)
-
-    def get_user_ip():
-        try:
-            ip_response = requests.get('https://api.ipify.org?format=json')
-            if ip_response.status_code == 200:
-                ip = ip_response.json()['ip']
-                st.write(f"User IP: {ip}")  # Debug: Show the user's IP
-                return ip
-            else:
-                st.error("Could not retrieve IP address.")
-                return None
-        except Exception as e:
-            st.error(f"Error getting IP address: {str(e)}")
-            return None
-
-    def get_location_from_ip(ip):
-        try:
-            location_response = requests.get(f'https://ipinfo.io/{ip}/json/')
-            if location_response.status_code == 200:
-                location_data = location_response.json()
-                # Extract latitude and longitude from the 'loc' field
-                loc = location_data.get('loc')
-                if loc:
-                    lat, lng = map(float, loc.split(','))
-                    # Add latitude and longitude to the location data
-                    location_data['latitude'] = lat
-                    location_data['longitude'] = lng
-                return location_data
-            else:
-                st.error(f"Could not retrieve location from IP. Status code: {location_response.status_code}")
-                return None
-        except Exception as e:
-            st.error(f"Error getting location: {str(e)}")
-            return None
+    def get_max_decimal_precision(lat, lon):
+        # Convert lat and lon to strings
+        lat_str = str(lat)
+        lon_str = str(lon)
+        
+        # Check the number of decimal places in lat and lon
+        lat_decimal_len = len(lat_str.split('.')[-1]) if '.' in lat_str else 0
+        lon_decimal_len = len(lon_str.split('.')[-1]) if '.' in lon_str else 0
+        
+        # Use the maximum decimal places
+        max_decimal_len = max(lat_decimal_len, lon_decimal_len)
+        
+        return max_decimal_len
+ # Importing the correct geolocation method
 
     def search_and_format_hospitals():
-        user_ip = get_user_ip()  # Get the user's IP address
-        if not user_ip:
-            st.error("Could not determine your IP address.")
-            return None
+        # Get the uses's location (latitude and longitude) using streamlit_geolocation
+        location = streamlit_geolocation() 
+        time.sleep(10)  # This function should return latitude and longitude
+        if location:
+            latitude = location['latitude']
+            longitude = location['longitude']
+                
+                # Get the maximum decimal precision
+            max_decimal_len = get_max_decimal_precision(latitude, longitude)
+                # Round both latitude and longitude to the max decimal precision
+            latitude = round(latitude, max_decimal_len)
+            longitude = round(longitude, max_decimal_len)
 
-        location_data = get_location_from_ip(user_ip)  # Get location data from IP
-        if not location_data:
-            st.error("Could not retrieve location from IP.")
-            return None
+            st.write(f"Latitude: {latitude}, Longitude: {longitude}") 
 
-        # Extract latitude and longitude
-        lat = location_data.get('latitude')
-        lng = location_data.get('longitude')
-
-        if lat is not None and lng is not None:
-            search_query = f"hospitals near me : {lat}°N {lng}°E"
-            
-            # Use Selenium to search Google with the search_query
             chrome_options = Options()
             chrome_options.add_argument('--headless')
             chrome_options.add_argument('--no-sandbox')
@@ -341,104 +285,108 @@ with col1:  # Put main content in left column
                 driver = webdriver.Chrome(options=chrome_options)
                 driver.get("https://www.google.com")
 
-                # Search for hospitals using the constructed query
+                st.write("Searching for hospitals...")
+
                 search_box = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.NAME, "q"))
                 )
+                # Modify the search query to include lat and lon
+                search_query = f"hospitals nearby my location less than 4km: {latitude},{longitude}"
                 search_box.send_keys(search_query)
-                search_box.send_keys(Keys.RETURN)
+                search_box.submit()
 
-                # Wait for results and extract hospital details
+                st.write("Waiting for results...")
+
                 places = WebDriverWait(driver, 10).until(
                     EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.VkpGBb"))
                 )
 
-                # Process and return hospital details
-                hospitals = []
-                for place in places[:5]:  # Limit to top 5 results
-                    name = place.find_element(By.CSS_SELECTOR, "div.dbg0pd").text
-                    details = place.find_element(By.CSS_SELECTOR, "div.rllt__details").text
-                    
-                    # Initialize raw details
-                    raw_details = {
-                        "name": name,
-                        "details": details  # Keep raw details for formatting
-                    }
+                st.write(f"Found {len(places)} places")
 
-                    hospitals.append(raw_details)
-
-                # Pass raw details to Gemini for formatting
-                formatted_hospitals = []
-                for hospital in hospitals:
-                    # Construct the directions link
-                    directions = f"https://www.google.com/maps/search/?api=1&query={hospital['name'].replace(' ', '+')}"
-
-                    prompt = f"""
-                    Clean and format the following hospital details:
-                    Name: {hospital['name']}
-                    Details: {hospital['details']}
-                    
-                    Return the information in the following format:
-                    Address: [address]
-                    Distance: [distance]
-                    Phone: [phone]
-                    Directions: {directions}
-                    """
-
-                    # Call Gemini to process the details
+                raw_hospitals = []
+                for place in places[:5]:
                     try:
-                        gemini_response = model.generate_content(prompt)
-                        if not gemini_response or not hasattr(gemini_response, 'text'):
-                            raise ValueError("No valid response from Gemini.")
-                        
-                        formatted_details = gemini_response.text.strip().split('\n')
-                        
-                        # Parse the formatted details
-                        formatted_hospital = {
-                            "name": hospital['name'],
-                            "address": "Not provided",
-                            "distance": "Not provided",
-                            "phone": "Not provided",
-                            "directions": directions  # Use the constructed directions link
-                        }
-                        
-                        for line in formatted_details:
-                            if line.startswith("Address:"):
-                                formatted_hospital["address"] = line.split("Address:")[1].strip()
-                            elif line.startswith("Distance:"):
-                                formatted_hospital["distance"] = line.split("Distance:")[1].strip()
-                            elif line.startswith("Phone:"):
-                                formatted_hospital["phone"] = line.split("Phone:")[1].strip()
-
-                        formatted_hospitals.append(formatted_hospital)
+                        name = place.find_element(By.CSS_SELECTOR, "div.dbg0pd").text
+                        details = place.find_element(By.CSS_SELECTOR, "div.rllt__details").text
+                        raw_hospitals.append({"name": name, "details": details})
                     except Exception as e:
-                        st.error(f"Error retrieving formatted details from Gemini: {str(e)}")
+                        continue
 
                 driver.quit()
 
-                return formatted_hospitals
+                if not raw_hospitals:
+                    st.error("No hospital data found")
+                    return None
+
+                # Format data and create prompt for Gemini
+                hospitals_data = "Here are the hospitals found:\n\n"
+                for idx, hospital in enumerate(raw_hospitals, 1):
+                    hospitals_data += f"Hospital {idx}:\nName: {hospital['name']}\nDetails: {hospital['details']}\n\n"
+
+                prompt = f"""
+                Parse these hospital details into a structured format. For each hospital, extract:
+                1. Name
+                2. Distance (the value ending with 'm' or 'km')
+                3. Address (the part with road/street name)
+                4. Phone number (the 10-digit or landline number)
+
+                Format as a list of dictionaries like this:
+                [
+                    {{
+                        "name": "Hospital Name",
+                        "distance": "X.X m",
+                        "address": "Street address",
+                        "phone": "Phone number",
+                        "directions": "https://www.google.com/maps/search/?api=1&query=Hospital+Name+Street+Address"
+                    }} 
+                ]
+
+                Here are the details to parse:
+                {hospitals_data}
+
+                Return ONLY the Python list, no other text.
+                """
+
+                response = model.generate_content(prompt)
+                hospitals = ast.literal_eval(response.text)
+                return hospitals
 
             except Exception as e:
-                if 'driver' in locals():
-                    driver.quit()
-                st.error(f"Error searching for hospitals: {str(e)}")
+                st.warning("Please click the 'Get My Location' button to allow geolocation access.")
                 return None
-        else:
-            st.error("Could not determine location from IP.")
-            return None
 
-    def display_hospitals(formatted_hospitals):
-        if not formatted_hospitals:
-            st.write("No hospitals found.")
-            return
+
+    def display_hospital_details(hospital, user_lat, user_lon):
+        st.subheader(f"🏥 {hospital['name']}")
+        st.write(f"📍 **Address:** {hospital['address']}")
+        st.write(f"📞 **Phone:** {hospital['phone']}")
+        st.write(f"🚗 **Distance:** {hospital['distance']}")
         
-        for hospital in formatted_hospitals:
-            with st.expander(f"🏥 {hospital['name']}"):
-                st.markdown(f"📍 **Address:** {hospital['address']}")
-                st.markdown(f"📏 **Distance:** {hospital['distance']}")
-                st.markdown(f"📞 **Phone:** {hospital['phone']}")
-                st.markdown(f"🗺️ **Directions:** [link]({hospital['directions']})")
-                
+        # Create map
+        m = folium.Map(location=[user_lat, user_lon], zoom_start=13)
+        
+        # Add user location marker
+        folium.Marker(
+            [user_lat, user_lon],
+            popup="Your Location",
+            icon=folium.Icon(color='red', icon='info-sign')
+        ).add_to(m)
+        
+        # Add hospital location marker
+        hospital_lat, hospital_lon = get_coordinates_from_address(hospital['address'])
+        if hospital_lat and hospital_lon:
+            folium.Marker(
+                [hospital_lat, hospital_lon],
+                popup=hospital['name'],
+                icon=folium.Icon(color='green', icon='plus')
+            ).add_to(m)
+        
+        # Display map
+        folium_static(m)
+        
+        # Add directions button
+        directions_url = f"https://www.google.com/maps/dir/{user_lat},{user_lon}/{hospital_lat},{hospital_lon}"
+        st.markdown(f"[🚗 Get Directions]({directions_url})")
 
     def create_emergency_sidebar():
         with st.sidebar:
@@ -497,141 +445,98 @@ with col1:  # Put main content in left column
                 st.rerun()
 
     def search_and_format_medical_shops():
-        user_ip = get_user_ip()  # Get the user's IP address
-        if not user_ip:
-            return None  # Suppress error message
+        location = streamlit_geolocation()
+        time.sleep(10)  # This function should return latitude and longitude
+        if location:
+            latitude = location['latitude']
+            longitude = location['longitude']
+                
+                # Get the maximum decimal precision
+            max_decimal_len = get_max_decimal_precision(latitude, longitude)
+                # Round both latitude and longitude to the max decimal precision
+            latitude = round(latitude, max_decimal_len)
+            longitude = round(longitude, max_decimal_len)
 
-        location_data = get_location_from_ip(user_ip)  # Get location data from IP
-        if not location_data:
-            return None  # Suppress error message
+            st.write(f"Latitude: {latitude}, Longitude: {longitude}") 
 
-        # Extract latitude and longitude
-        lat = location_data.get('latitude')
-        lng = location_data.get('longitude')
-
-        if lat is not None and lng is not None:
-            search_query = f"medical shops near me : {lat}°N {lng}°E"
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        
+        try:
+            driver = webdriver.Chrome(options=chrome_options)
+            driver.get("https://www.google.com")
             
-            # Use Selenium to search Google with the search_query
-            chrome_options = Options()
-            chrome_options.add_argument('--headless')
-            chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--disable-dev-shm-usage')
-
-            try:
-                driver = webdriver.Chrome(options=chrome_options)
-                driver.get("https://www.google.com")
-
-                # Search for medical shops using the constructed query
-                search_box = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.NAME, "q"))
-                )
-                search_box.send_keys(search_query)
-                search_box.send_keys(Keys.RETURN)
-
-                # Wait for results and extract medical shop details
-                places = WebDriverWait(driver, 10).until(
-                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.VkpGBb"))
-                )
-
-                # Process and return medical shop details
-                shops = []
-                for place in places[:5]:  # Limit to top 5 results
+            st.write("Searching for medical shops...")
+            
+            search_box = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.NAME, "q"))
+            )
+            search_query = f"medical shops nearby my location less than 4km: {latitude},{longitude}"
+            search_box.send_keys(search_query)
+            search_box.submit()
+            
+            st.write("Waiting for results...")
+            
+            places = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.VkpGBb"))
+            )
+            
+            st.write(f"Found {len(places)} places")
+            
+            raw_shops = []
+            for place in places[:5]:
+                try:
                     name = place.find_element(By.CSS_SELECTOR, "div.dbg0pd").text
                     details = place.find_element(By.CSS_SELECTOR, "div.rllt__details").text
-                    
-                    # Initialize raw details
-                    raw_details = {
-                        "name": name,
-                        "details": details  # Keep raw details for formatting
-                    }
+                    raw_shops.append({"name": name, "details": details})
+                except Exception as e:
+                    continue
+            
+            driver.quit()
 
-                    # Print the raw details for debugging
-                 
+            if not raw_shops:
+                st.error("No medical shops found")
+                return None
 
-                    shops.append(raw_details)
+            # Format data and create prompt for Gemini
+            shops_data = "Here are the medical shops found:\n\n"
+            for idx, shop in enumerate(raw_shops, 1):
+                shops_data += f"Shop {idx}:\nName: {shop['name']}\nDetails: {shop['details']}\n\n"
 
-                driver.quit()
+            prompt = f"""
+            Parse these medical shop details into a structured format. For each shop, extract:
+            1. Name
+            2. Distance (the value ending with 'm' or 'km')
+            3. Address (the part with road/street name)
+            4. Phone number (the 10-digit or landline number)
 
-                # Pass raw details to Gemini for formatting
-                formatted_shops = []
-                for shop in shops:
-                    # Construct the directions link
-                    directions = f"https://www.google.com/maps/search/?api=1&query={shop['name'].replace(' ', '+')}"
+            Format as a list of dictionaries like this:
+            [
+                {{
+                    "name": "Shop Name",
+                    "distance": "X.X m",
+                    "address": "Street address",
+                    "phone": "Phone number",
+                    "directions": "https://www.google.com/maps/search/?api=1&query=Shop+Name+Street+Address"
+                }},
+            ]
 
-                    prompt = f"""
-                    Clean and format the following medical shop details:
-                    Name: {shop['name']}
-                    Details: {shop['details']}
-                    
-                    Return the information in the following format:
-                    Address: [address]
-                    Distance: [distance]
-                    Phone: [phone]
-                    Directions: [link]
-                    """
+            Here are the details to parse:
+            {shops_data}
 
-                    # Log the prompt for debugging
-                   
+            Return ONLY the Python list, no other text.
+            """
 
-                    # Call Gemini to process the details
-                    formatted_details = []  # Initialize formatted_details
-                    for attempt in range(3):  # Retry mechanism
-                        try:
-                            gemini_response = model.generate_content(prompt)
-                            if not gemini_response or not hasattr(gemini_response, 'text'):
-                                raise ValueError("No valid response from Gemini.")
-                            
-                            response_text = getattr(gemini_response, 'text', None)
-                            if not response_text:
-                                raise ValueError("Response text is empty.")
-                            
-                            formatted_details = response_text.strip().split('\n')
-                            break  # Exit retry loop if successful
-                        except Exception:
-                            continue  # Skip to the next shop if an error occurs
+            response = model.generate_content(prompt)
+            shops = ast.literal_eval(response.text)
+            return shops
 
-                    # Check if formatted_details was successfully populated
-                    if formatted_details:
-                        # Parse the formatted details if successful
-                        formatted_shop = {
-                            "name": shop['name'],
-                            "address": "Not provided",
-                            "distance": "Not provided",
-                            "phone": "Not provided",
-                            "directions": directions  # Use the constructed directions link
-                        }
-                        
-                        for line in formatted_details:
-                            if line.startswith("Address:"):
-                                formatted_shop["address"] = line.split("Address:")[1].strip()
-                            elif line.startswith("Distance:"):
-                                formatted_shop["distance"] = line.split("Distance:")[1].strip()
-                            elif line.startswith("Phone:"):
-                                formatted_shop["phone"] = line.split("Phone:")[1].strip()
-
-                        formatted_shops.append(formatted_shop)
-
-                return formatted_shops
-
-            except Exception:
-                if 'driver' in locals():
-                    driver.quit()
-                return None  # Suppress error message
-        else:
-            return None  # Suppress error message
-
-    def display_medical_shops(formatted_shops):
-        if not formatted_shops:
-            st.write("No medical shops found.")
-            return
-        
-        for shop in formatted_shops:
-            with st.expander(f"💊 {shop['name']}"):
-                st.markdown(f"📍 **Address:** {shop['address']}")
-                st.markdown(f"📏 **Distance:** {shop['distance']}")
-                st.markdown(f"📞 **Phone:** {shop['phone']}")
-                st.markdown(f"🗺️ **Directions:** [Link]({shop['directions']})")
+        except Exception as e:
+            st.warning("Please click the 'Get My Location' button to allow geolocation access.")
+            return None
+            
 
     # Initialize session states
     if 'show_hospitals' not in st.session_state:
@@ -643,9 +548,15 @@ with col1:  # Put main content in left column
 
     # In your main content area
     if st.session_state.show_hospitals:
-        formatted_hospitals = search_and_format_hospitals()
-        if formatted_hospitals:
-            display_hospitals(formatted_hospitals)
+        hospitals = search_and_format_hospitals()
+        if hospitals:
+            st.success("Found nearby hospitals!")
+            for hospital in hospitals:
+                with st.expander(f"🏥 {hospital['name']}"):
+                    st.write(f"📍 **Address:** {hospital['address']}")
+                    st.write(f"🚗 **Distance:** {hospital['distance']}")
+                    st.write(f"📞 **Phone:** {hospital['phone']}")
+                    st.markdown(f"[🗺️ Get Directions]({hospital['directions']})")
         else:
             st.error("No hospitals found nearby")
 
@@ -726,7 +637,7 @@ with col1:  # Put main content in left column
                     - 💊 Take prescribed medicines as directed
                     - 🏠 Get adequate rest
                     - 🥗 Stay hydrated
-                    - 🚑 Seek emergency care if needed
+                    - ⚠️ Seek emergency care if needed
                     """
                     
                     try:
@@ -749,12 +660,16 @@ with col1:  # Put main content in left column
             else:
                 st.warning("Please fill in all fields.")
 
-
-# Add this new function near your other helper functions
-
-
-# Modify your existing get_nearby_places function
-
+def get_coordinates_from_address(address):
+    try:
+        geolocator = Nominatim(user_agent="medibot")
+        location = geolocator.geocode(address)
+        if location:
+            return location.latitude, location.longitude
+        return None, None
+    except Exception as e:
+        st.error(f"Error getting coordinates: {e}")
+        return None, None
 
 if __name__ == "__main__":
     create_emergency_sidebar()
