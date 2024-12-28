@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import requests
 import google.generativeai as genai
-
+import os
 
 
 # Configure Gemini (add this near your imports)
