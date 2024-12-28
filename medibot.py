@@ -291,7 +291,7 @@ with col1:  # Put main content in left column
                     EC.presence_of_element_located((By.NAME, "q"))
                 )
                 # Modify the search query to include lat and lon
-                search_query = f"hospitals nearby my location less than 4km: {latitude},{longitude}"
+                search_query = f"hospitals nearby this location less than 4km: {latitude},{longitude}"
                 search_box.send_keys(search_query)
                 search_box.submit()
 
@@ -473,7 +473,7 @@ with col1:  # Put main content in left column
             search_box = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, "q"))
             )
-            search_query = f"medical shops nearby my location less than 4km: {latitude},{longitude}"
+            search_query = f"medical shops nearby this location less than 4km: {latitude},{longitude}"
             search_box.send_keys(search_query)
             search_box.submit()
             
