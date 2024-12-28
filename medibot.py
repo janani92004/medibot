@@ -12,7 +12,10 @@ import google.generativeai as genai
 
 
 # Configure Gemini (add this near your imports)
-genai.configure(api_key='AIzaSyDDjCutEZobboVnlAqOjSLXQANWihZFBhI')
+api_key = os.getenv("api_key")
+
+# Configure the API with the key
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-pro')
 
 # Load datasets
