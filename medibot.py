@@ -18,7 +18,7 @@ import time
 import os
 # Access the Google API key from the secrets
 # Configure Gemini (add this near your imports)
-api_key = os.getenv("api_key")
+api_key = st.secrets['google']
 
 # Configure the API with the key
 genai.configure(api_key=api_key)
