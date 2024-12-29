@@ -250,12 +250,9 @@ with col1:  # Put main content in left column
 
     def search_and_format_hospitals():
         # Get the uses's location (latitude and longitude) using streamlit_geolocation
-        location = streamlit_geolocation() 
-        time.sleep(10)  # This function should return latitude and longitude
-        if location:
-            latitude = location['latitude']
-            longitude = location['longitude']
-                
+            latitude = 12.987755123263817
+            longitude = 80.2021034131968
+                    
                 # Get the maximum decimal precision
            
 
