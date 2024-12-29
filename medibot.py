@@ -12,6 +12,7 @@ import google.generativeai as genai
 import ast
 from streamlit_geolocation import streamlit_geolocation 
 import time
+import os
 # Access the Google API key from the secrets
 api_key =os.getenv('api_key')
 API_KEY_2 =os.getenv('API_KEY_2')
