@@ -245,19 +245,7 @@ with col1:  # Put main content in left column
                 'directions': "Directions not available"
             }
 
-    def get_max_decimal_precision(lat, lon):
-        # Convert lat and lon to strings
-        lat_str = str(lat)
-        lon_str = str(lon)
-        
-        # Check the number of decimal places in lat and lon
-        lat_decimal_len = len(lat_str.split('.')[-1]) if '.' in lat_str else 0
-        lon_decimal_len = len(lon_str.split('.')[-1]) if '.' in lon_str else 0
-        
-        # Use the maximum decimal places
-        max_decimal_len = max(lat_decimal_len, lon_decimal_len)
-        
-        return max_decimal_len
+    
  # Importing the correct geolocation method
 
     def search_and_format_hospitals():
@@ -269,10 +257,7 @@ with col1:  # Put main content in left column
             longitude = location['longitude']
                 
                 # Get the maximum decimal precision
-            max_decimal_len = get_max_decimal_precision(latitude, longitude)
-                # Round both latitude and longitude to the max decimal precision
-            latitude = round(latitude, max_decimal_len)
-            longitude = round(longitude, max_decimal_len)
+           
 
             st.write(f"Latitude: {latitude}, Longitude: {longitude}") 
 
@@ -452,10 +437,7 @@ with col1:  # Put main content in left column
             longitude = location['longitude']
                 
                 # Get the maximum decimal precision
-            max_decimal_len = get_max_decimal_precision(latitude, longitude)
-                # Round both latitude and longitude to the max decimal precision
-            latitude = round(latitude, max_decimal_len)
-            longitude = round(longitude, max_decimal_len)
+           
 
             st.write(f"Latitude: {latitude}, Longitude: {longitude}") 
 
