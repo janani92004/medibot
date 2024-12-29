@@ -354,7 +354,7 @@ with col1:  # Put main content in left column
             st.markdown("---")
             st.caption("""
                 ⚠️ **Disclaimer**: In case of emergency, immediately dial your 
-                country's emergency services number.
+                country's emergency services number. Also, please note that if your conditions are persistent, immediately visit your local doctor or hospital.
             """)
             
             st.markdown("---")
