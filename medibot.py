@@ -265,7 +265,7 @@ with col1:  # Put main content in left column
 
             try:
                 driver = webdriver.Chrome(options=chrome_options)
-                driver.get("https://www.google.com")
+                driver.get("https://www.google.co.in/")
 
                 st.write("Searching for hospitals...")
 
