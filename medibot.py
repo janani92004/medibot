@@ -272,6 +272,11 @@ with col1:  # Put main content in left column
                 search_box = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.NAME, "q"))
                 )
+                st.write("Search completed.")
+                st.write(f"Page Title: {driver.title}")
+                search_results = driver.find_elements(By.XPATH, "//h3//following-sibling::div//a")
+                for result in search_results:
+                        st.write(result.get_attribute('href'))
                 # Modify the search query to include lat and lon
                 search_query = f"hospitals nearby this location less than 4km: {latitude},{longitude}"
                 search_box.send_keys(search_query)
