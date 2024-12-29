@@ -13,8 +13,9 @@ import ast
 from streamlit_geolocation import streamlit_geolocation 
 import time
 # Access the Google API key from the secrets
-api_key ='AIzaSyDDjCutEZobboVnlAqOjSLXQANWihZFBhI'
-
+api_key =os.getenv('api_key')
+API_KEY_2 =os.getenv('API_KEY_2')
+API_KEY_3 =os.getenv('API_KEY_3')
 # Configure the API with the key
 genai.configure(api_key=api_key)
 
@@ -74,6 +75,47 @@ with col1:  # Put main content in left column
                 if any(keyword in user_emergency.lower() for keyword in row['Emergency'].lower().split()):
                     return row.to_dict()  # Convert the row to a dictionary
         return None
+    
+    def search_youtube_for_remedies(symptoms):
+    # Create a YouTube search URL with the symptoms as query
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')  # Run in headless mode (no GUI)
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        
+        try:
+            driver = webdriver.Chrome(options=chrome_options)
+            driver.get("https://www.youtube.com")
+            
+            # Accept cookies if present
+            try:
+                cookie_button = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Accept all']"))
+                )
+                cookie_button.click()
+            except:
+                pass
+            
+            # Modified search query
+            search_query = f"home remedies for {' '.join(symptoms.split(','))}"
+            
+            search_box = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.NAME, "search_query"))
+            )
+            search_box.send_keys(search_query)
+            search_box.send_keys(Keys.RETURN)
+            
+            first_video = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "a#video-title"))
+            )
+            video_url = first_video.get_attribute('href')
+            
+            driver.quit()
+            return video_url
+        except Exception as e:
+            if 'driver' in locals():
+                driver.quit()
+            return None
 
     # Function to recommend drug
     def recommend_drug(symptoms, age, dataset1, dataset2):
@@ -168,64 +210,10 @@ with col1:  # Put main content in left column
                 driver.quit()
             return None
 
-    def get_doctors_advice(diagnosis):
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        
-        try:
-            driver = webdriver.Chrome(options=chrome_options)
-            driver.get("https://www.google.com")
-            
-            # Accept cookies if present
-            try:
-                cookie_button = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Accept all')]"))
-                )
-                cookie_button.click()
-            except:
-                pass
-            
-            # Modified search query to focus on advice keywords
-            search_query = f"{diagnosis} treatment tips home remedies self care advice"
-            search_box = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "q"))
-            )
-            search_box.send_keys(search_query)
-            search_box.send_keys(Keys.RETURN)
-            
-            # Wait for and extract the AI Overview content
-            ai_overview = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "div[class*='VwiC3b']"))  # This targets Gemini's overview box
-            )
-            
-            advice_text = []
-            if ai_overview:
-                text = ai_overview.text
-                # Extract key points from the AI overview
-                advice_text.append(text)
-            
-            driver.quit()
-            
-            # Format the output
-            if advice_text:
-                formatted_advice = "### AI Overview:\n" + "\n".join(advice_text)
-                return formatted_advice
-            return None
-            
-        except Exception as e:
-            if 'driver' in locals():
-                driver.quit()
-            return None
-
-
-    
- # Importing the correct geolocation method
-
     def search_and_format_hospitals():
     # Get the user's location (latitude and longitude) using streamlit_geolocation
         location = streamlit_geolocation()
+        st.write('Please click the above button to find your location')
         time.sleep(10)  # This function should return latitude and longitude
         
         if location:
@@ -235,7 +223,7 @@ with col1:  # Put main content in left column
             st.write(f"Latitude: {latitude}, Longitude: {longitude}")
             
             # Google Places API endpoint and API key
-            API_KEY = 'AIzaSyC8JIhroOULD70lAQbEvIHVMRCZR1_MbNE'
+            
             places_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
             
             # Parameters for the API call
@@ -243,7 +231,7 @@ with col1:  # Put main content in left column
                 'location': f'{latitude},{longitude}',
                 'radius': 1000,  # 1 km radius
                 'type': 'hospital',  # Change this to 'hospital' for hospitals
-                'key': API_KEY
+                'key': API_KEY_2
             }
 
             try:
@@ -269,7 +257,7 @@ with col1:  # Put main content in left column
                         details_url = "https://maps.googleapis.com/maps/api/place/details/json"
                         details_params = {
                             'place_id': place_id,
-                            'key': API_KEY
+                            'key': API_KEY_2
                         }
                         details_response = requests.get(details_url, params=details_params)
                         details_data = details_response.json()
@@ -390,6 +378,7 @@ with col1:  # Put main content in left column
     def search_and_format_medical_shops():
     # Get the user's location (latitude and longitude) using streamlit_geolocation
         location = streamlit_geolocation()
+        st.write('Please click the above button to find your location')
         time.sleep(10)  # This function should return latitude and longitude
         
         if location:
@@ -399,7 +388,7 @@ with col1:  # Put main content in left column
             st.write(f"Latitude: {latitude}, Longitude: {longitude}")
             
             # Google Places API endpoint and API key
-            API_KEY = 'AIzaSyCP5EhzQSROox7GpdExELWXhhqmIOUH3pU'
+            
             places_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
             
             # Parameters for the API call
@@ -407,7 +396,7 @@ with col1:  # Put main content in left column
                 'location': f'{latitude},{longitude}',
                 'radius': 1000,  # 4 km radius
                 'type': 'pharmacy',  # Change this to 'pharmacy' for medical shops
-                'key': API_KEY
+                'key': API_KEY_3
             }
 
             try:
@@ -439,7 +428,7 @@ with col1:  # Put main content in left column
                         details_url = "https://maps.googleapis.com/maps/api/place/details/json"
                         details_params = {
                             'place_id': place_id,
-                            'key': API_KEY
+                            'key': API_KEY_3
                         }
                         details_response = requests.get(details_url, params=details_params)
                         details_data = details_response.json()
@@ -562,7 +551,7 @@ with col1:  # Put main content in left column
             else:
                 st.warning("Please enter an emergency description.")
 
-    elif user_choice == "Diagnosis":
+    elif user_choice == "Diagnosis and Medicine Recommendation":
         # Clear any hospital or medical shop results
         st.session_state.show_hospitals = False
         st.session_state.show_medical_shops = False
@@ -612,6 +601,13 @@ with col1:  # Put main content in left column
                             
                     except Exception as e:
                         st.error("Could not generate additional advice.")
+                    video_url = search_youtube_for_remedies(symptoms)
+                    
+                    if video_url:
+                        st.markdown("### YouTube Video: Home Remedies")
+                        st.video(video_url)
+                    else:
+                        st.warning("No relevant video found.")
                     
                 else:
                     st.warning("Sorry, no match found for the provided symptoms.")
