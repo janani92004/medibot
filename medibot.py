@@ -249,13 +249,10 @@ with col1:  # Put main content in left column
  # Importing the correct geolocation method
 
     def search_and_format_hospitals():
+        
         # Get the uses's location (latitude and longitude) using streamlit_geolocation
             latitude = 12.987755123263817
             longitude = 80.2021034131968
-                    
-                # Get the maximum decimal precision
-           
-
             st.write(f"Latitude: {latitude}, Longitude: {longitude}") 
 
             chrome_options = Options()
@@ -272,11 +269,8 @@ with col1:  # Put main content in left column
                 search_box = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.NAME, "q"))
                 )
-                st.write("Search completed.")
-                st.write(f"Page Title: {driver.title}")
-                search_results = driver.find_elements(By.XPATH, "//h3//following-sibling::div//a")
-                for result in search_results:
-                        st.write(result.get_attribute('href'))
+               
+                
                 # Modify the search query to include lat and lon
                 search_query = f"hospitals nearby this location less than 4km: {latitude},{longitude}"
                 search_box.send_keys(search_query)
@@ -289,6 +283,8 @@ with col1:  # Put main content in left column
                 )
 
                 st.write(f"Found {len(places)} places")
+
+                
 
                 raw_hospitals = []
                 for place in places[:5]:
