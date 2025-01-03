@@ -1,22 +1,19 @@
 import streamlit as st
 import pandas as pd
 import urllib.parse
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 import requests
 import google.generativeai as genai
 import ast
 from streamlit_geolocation import streamlit_geolocation 
 import time
-import os
+from googleapiclient.discovery import build
+from streamlit_option_menu import option_menu
+
 # Access the Google API key from the secrets
-api_key =os.getenv('api_key')
-API_KEY_2 =os.getenv('API_KEY_2')
-API_KEY_3 =os.getenv('API_KEY_3')
+yt_api_key =st.secrets["api_keys"]["yt_api_key"]
+api_key =st.secrets["api_keys"]["api_key"]
+API_KEY_2 = st.secrets["api_keys"]["APY_KEY_2"]
+API_KEY_3 = st.secrets["api_keys"]["API_KEY_3"]
 # Configure the API with the key
 genai.configure(api_key=api_key)
 
@@ -44,7 +41,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Wrap main content in columns for better spacing
-col1, col2, col3 = st.columns([2,1,1])  # Makes the first column wider
+col1, col2, col3 = st.columns([3,1,1])  # Makes the first column wider
 
 # At the start of your main code, add these session state initializations
 if 'current_task' not in st.session_state:
@@ -56,10 +53,14 @@ if 'show_medical_shops' not in st.session_state:
 
 with col1:  # Put main content in left column
     # User choice
-    user_choice = st.selectbox(
-        "What help do you need?",
-        ["First Aid", "Diagnosis and Medicine Recommendation"]
-    )
+    user_choice = option_menu(
+    menu_title="Main Menu",  # Title of the menu
+    options=["💊First Aid", "🩹 Diagnosis and Medicine Recommendation", "🏥 Search Hospitals", "💉 Search Medical Shops"],  # Updated Menu options
+    icons=["🩹", "💊", "🏥", "💉"],  # Emojis for the menu items
+    menu_icon="🏥",  # Icon for the entire menu (you can also use an emoji here)
+    default_index=0,  # Default selected option
+)
+
 
     # Clear previous results when task changes
     if 'previous_task' not in st.session_state:
@@ -77,46 +78,35 @@ with col1:  # Put main content in left column
                     return row.to_dict()  # Convert the row to a dictionary
         return None
     
-    def search_youtube_for_remedies(symptoms):
-    # Create a YouTube search URL with the symptoms as query
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')  # Run in headless mode (no GUI)
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
+    def search_youtube_for_remedies(symptoms, api_key):
         
+        # Format the query for YouTube search
+        query = f"home remedies for {' '.join(symptoms.split(','))}"
+
+        # Build the YouTube API client
+        youtube = build('youtube', 'v3', developerKey=api_key)
+
+        # Perform the search
         try:
-            driver = webdriver.Chrome(options=chrome_options)
-            driver.get("https://www.youtube.com")
-            
-            # Accept cookies if present
-            try:
-                cookie_button = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Accept all']"))
-                )
-                cookie_button.click()
-            except:
-                pass
-            
-            # Modified search query
-            search_query = f"home remedies for {' '.join(symptoms.split(','))}"
-            
-            search_box = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "search_query"))
-            )
-            search_box.send_keys(search_query)
-            search_box.send_keys(Keys.RETURN)
-            
-            first_video = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "a#video-title"))
-            )
-            video_url = first_video.get_attribute('href')
-            
-            driver.quit()
-            return video_url
+            search_response = youtube.search().list(
+                q=query,
+                part='snippet',
+                type='video',
+                maxResults=1  # Fetch only the first result
+            ).execute()
+
+            # Extract video information
+            if search_response['items']:
+                video = search_response['items'][0]
+                video_title = video['snippet']['title']
+                video_id = video['id']['videoId']
+                video_url = f"https://www.youtube.com/watch?v={video_id}"
+                return video_title, video_url
+            else:
+                return None, None
         except Exception as e:
-            if 'driver' in locals():
-                driver.quit()
-            return None
+            print(f"An error occurred: {e}")
+            return None, None
 
     # Function to recommend drug
     def recommend_drug(symptoms, age, dataset1, dataset2):
@@ -126,15 +116,15 @@ with col1:  # Put main content in left column
 
         # Custom logic for specific symptom combinations
         if set(['fever', 'headache', 'fatigue']).issubset(symptoms_list):
-            disease = 'Influenza'
+            disease = 'Sinusitis'
         elif 'headache' in symptoms_list and len(symptoms_list) == 1:
-            disease = 'Migraine'
+            disease = ' Possible Migraine'
         elif set(['fever', 'cough', 'fatigue']).issubset(symptoms_list):
             disease = 'Common Cold'
         elif set(['fever', 'sore throat', 'fatigue']).issubset(symptoms_list):
-            disease = 'Strep Throat'
+            disease = 'Throat Infection'
         elif set(['fever', 'nausea', 'fatigue']).issubset(symptoms_list):
-            disease = 'Food Poisoning'
+            disease = 'Stomach Infection'
         else:
             for index, row in dataset1.iterrows():
                 if any(symptom in row['Symptoms'].lower() for symptom in symptoms_list):
@@ -155,14 +145,15 @@ with col1:  # Put main content in left column
             for index, row in dataset2.iterrows():
                 if row['Preliminary_Disease_Diagnosis'].lower() == disease.lower():
                     if age <= 12:
-                        recommended_dosage = row['Child']
+                        st.info('⚠️Please visit a doctor or your local pediatriian for children')
                     elif age > 12 and age <= 65:
                         recommended_dosage = row['Adult']
                     else:
-                        recommended_dosage = row['Senior']
+                        recommended_dosage = row['Adult']
                     break
 
             if recommended_dosage is not None:
+                st.info('⚠️Please visit a doctor if conditions worsen within a day.')
                 return {
                     'Diagnosis': disease,
                     'Medicine': recommended_medicine,
@@ -171,45 +162,31 @@ with col1:  # Put main content in left column
                 }
         return None
 
-    def search_youtube(query):
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')  # Run in headless mode (no GUI)
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
+    def search_youtube_emergency(emergency, api_key):
+    # Build the search prompt
+        query = f"how to perform first aid for a: {emergency} in english"
         
-        try:
-            driver = webdriver.Chrome(options=chrome_options)
-            driver.get("https://www.youtube.com")
-            
-            # Accept cookies if present
-            try:
-                cookie_button = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Accept all']"))
-                )
-                cookie_button.click()
-            except:
-                pass
-            
-            # Modified search query
-            search_query = f"how to treat a {query}"
-            
-            search_box = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "search_query"))
-            )
-            search_box.send_keys(search_query)
-            search_box.send_keys(Keys.RETURN)
-            
-            first_video = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "a#video-title"))
-            )
-            video_url = first_video.get_attribute('href')
-            
-            driver.quit()
-            return video_url
-        except Exception as e:
-            if 'driver' in locals():
-                driver.quit()
-            return None
+        # Build the YouTube API client
+        youtube = build('youtube', 'v3', developerKey=api_key)
+
+        # Perform the search
+        search_response = youtube.search().list(
+            q=query,
+            part='snippet',
+            type='video',
+            maxResults=1  # Fetch only the first result
+        ).execute()
+
+        # Extract the video information
+        if search_response['items']:
+            video = search_response['items'][0]
+            video_title = video['snippet']['title']
+            video_id = video['id']['videoId']
+            video_url = f"https://www.youtube.com/watch?v={video_id}"
+            return video_title, video_url
+        else:
+            return None, None
+
 
     def search_and_format_hospitals():
     # Get the user's location (latitude and longitude) using streamlit_geolocation
@@ -354,27 +331,13 @@ with col1:  # Put main content in left column
             st.markdown("---")
             st.caption("""
                 ⚠️ **Disclaimer**: In case of emergency, immediately dial your 
-                country's emergency services number. Also, please note that if your conditions are persistent, immediately visit your local doctor or hospital.
+                country's emergency services number.
             """)
             
             st.markdown("---")
             
             # Initialize session states if they don't exist
-            if 'show_hospitals' not in st.session_state:
-                st.session_state.show_hospitals = False
-            if 'show_medical_shops' not in st.session_state:
-                st.session_state.show_medical_shops = False
-            
-            # Modified buttons with callbacks
-            if st.button("🏥 Search For Hospitals Nearby", type="primary"):
-                st.session_state.show_hospitals = True
-                st.session_state.show_medical_shops = False
-                st.rerun()
-            
-            if st.button("💊 Search For Medical Shops Nearby"):
-                st.session_state.show_medical_shops = True
-                st.session_state.show_hospitals = False
-                st.rerun()
+         
 
     def search_and_format_medical_shops():
     # Get the user's location (latitude and longitude) using streamlit_geolocation
@@ -488,47 +451,18 @@ with col1:  # Put main content in left column
             st.warning("Please click the 'Get My Location' button to allow geolocation access.")
             return None
 
-    # Initialize session states
-    if 'show_hospitals' not in st.session_state:
-        st.session_state.show_hospitals = False
-    if 'selected_hospital' not in st.session_state:
-        st.session_state.selected_hospital = None
-    if 'show_medical_shops' not in st.session_state:
-        st.session_state.show_medical_shops = False
-
-    # In your main content area
-    if st.session_state.show_hospitals:
-        hospitals = search_and_format_hospitals()
-        if hospitals:
-            st.success("Found nearby hospitals!")
-            for hospital in hospitals:
-                with st.expander(f"🏥 {hospital['name']}"):
-                    st.write(f"📍 **Address:** {hospital['address']}")
-                    st.write(f"📞 **Phone:** {hospital['phone']}")
-                    st.markdown(f"[🗺️ Get Directions]({hospital['directions']})")
-        else:
-            st.error("No hospitals found nearby")
-
-    if 'show_medical_shops' not in st.session_state:
-        st.session_state.show_medical_shops = False
-
-    if st.session_state.show_medical_shops:
-        shops = search_and_format_medical_shops()
-        if shops:
-            st.success("Found nearby medical shops!")
-            for shop in shops:
-                with st.expander(f"💊 {shop['name']}"):
-                    st.write(f"📍 **Address:** {shop['address']}")
-                    st.write(f"📞 **Phone:** {shop['phone']}")
-                    st.markdown(f"[🗺️ Get Directions]({shop['directions']})")
-        else:
-            st.error("No medical shops found nearby")
-
-    if user_choice == "First Aid":
-        # Clear any hospital or medical shop results
+    if 'previous_task' not in st.session_state:
+        st.session_state.previous_task = user_choice
+    if st.session_state.previous_task != user_choice:
         st.session_state.show_hospitals = False
         st.session_state.show_medical_shops = False
-        
+        st.session_state.previous_task = user_choice
+
+    if user_choice == "💊First Aid":
+    # Clear any hospital or medical shop results
+        st.session_state.show_hospitals = False
+        st.session_state.show_medical_shops = False
+
         user_emergency = st.text_input("Please describe your emergency:")
         if st.button("Get Advice"):
             if user_emergency:
@@ -543,20 +477,23 @@ with col1:  # Put main content in left column
                         st.video(video_url)
                 else:
                     st.warning("No matching advice found in our database. Searching YouTube for relevant first aid videos...")
-                    video_url = search_youtube(user_emergency)
+                    
+                    # Call the updated `search_youtube` function with API key passed directly
+                    video_title, video_url = search_youtube_emergency(user_emergency, yt_api_key)  # Replace with your actual API key
+                    
                     if video_url:
-                        st.info("Here's a relevant first aid video from YouTube:")
+                        st.info(f"Here's a relevant first aid video from YouTube: **{video_title}**")
                         st.video(video_url)
                     else:
                         st.error("Sorry, couldn't find any relevant videos.")
             else:
                 st.warning("Please enter an emergency description.")
 
-    elif user_choice == "Diagnosis and Medicine Recommendation":
-        # Clear any hospital or medical shop results
+    elif user_choice == "🩹 Diagnosis and Medicine Recommendation":
+    # Clear any hospital or medical shop results
         st.session_state.show_hospitals = False
         st.session_state.show_medical_shops = False
-        
+
         # Arrange form fields in a cleaner layout
         col_left, col_right = st.columns(2)
         with col_left:
@@ -564,16 +501,37 @@ with col1:  # Put main content in left column
         with col_right:
             patient_age = st.number_input("What is your age?", min_value=0)
         symptoms = st.text_area("What symptoms are you experiencing (comma-separated)?", height=100)
-        
+
         if st.button("Get Diagnosis"):
             if patient_name and patient_age and symptoms:
                 recommended_info = recommend_drug(symptoms, patient_age, dataset1, dataset2)
                 if recommended_info:
                     st.success(f"Preliminary diagnosis based on symptoms: {recommended_info['Diagnosis']}")
                     st.write(f"Recommended medicine: {recommended_info['Medicine']}")
-                    st.write(f"Recommended dosage according to age: {recommended_info['Dosage']}")
-                    st.write(f"Recommended advice related to symptoms: {recommended_info['Advice']}")
+                    dosage_description = recommended_info['Dosage']
                     
+                    # Pass the dosage description to Gemini for neat formatting
+                    prompt = f"""
+                    Format the following dosage information in a neat and easy-to-understand manner:
+                    {dosage_description}
+                    Provide a clean, formatted output with each medicine and its dosage on a separate line. Make it visually appealing with appropriate icons.
+                    """
+
+                    try:
+                        # Assuming `model` is an instance of Gemini
+                        response = model.generate_content(prompt)
+                        st.markdown("---")
+                        st.subheader("💊 Medication Dosage Instructions")
+
+                        # Display the formatted response
+                        st.markdown(response.text)
+
+                    except Exception as e:
+    
+                        # Fallback to the original dosage description
+                        st.write(f"💊 Recommended dosage according to age:: {dosage_description}")
+                        st.write(f"Recommended advice related to symptoms: {recommended_info['Advice']}")
+
                     prompt = f"""
                     Based on this diagnosis: {recommended_info['Diagnosis']}
                     And these symptoms: {symptoms}
@@ -592,28 +550,59 @@ with col1:  # Put main content in left column
                         response = model.generate_content(prompt)
                         st.markdown("---")
                         st.subheader("📋 Quick Health Tips")
-                        
+
                         # Split the response into lines and create bullet points
                         advice_points = [line.strip() for line in response.text.split('\n') if line.strip()]
                         for point in advice_points:
                             # Remove any existing bullet points or dashes
                             clean_point = point.lstrip('- •').strip()
                             st.write(f"• {clean_point}")
-                            
+
                     except Exception as e:
                         st.error("Could not generate additional advice.")
-                    video_url = search_youtube_for_remedies(symptoms)
-                    
+
+                    # Now using the search_youtube_for_remedies function
+                    # Replace with your actual API key
+                    video_title, video_url = search_youtube_for_remedies(symptoms, yt_api_key)
+
                     if video_url:
-                        st.markdown("### YouTube Video: Home Remedies")
+                        st.markdown(f"### YouTube Video: {video_title}")
                         st.video(video_url)
                     else:
                         st.warning("No relevant video found.")
-                    
+
                 else:
                     st.warning("Sorry, no match found for the provided symptoms.")
             else:
                 st.warning("Please fill in all fields.")
+    
+    elif user_choice == "🏥 Search Hospitals":
+        st.session_state.show_hospitals = True
+        st.session_state.show_medical_shops = False
+        hospitals = search_and_format_hospitals()
+        if hospitals:
+            st.success("Found nearby hospitals!")
+            for hospital in hospitals:
+                with st.expander(f"🏥 {hospital['name']}"):
+                    st.write(f"📍 **Address:** {hospital['address']}")
+                    st.write(f"📞 **Phone:** {hospital['phone']}")
+                    st.markdown(f"[🗺️ Get Directions]({hospital['directions']})")
+        else:
+            st.error("No hospitals found nearby.")
+
+    elif user_choice == "💉Search Medical Shops":
+        st.session_state.show_hospitals = False
+        st.session_state.show_medical_shops = True
+        shops = search_and_format_medical_shops()
+        if shops:
+            st.success("Found nearby medical shops!")
+            for shop in shops:
+                with st.expander(f"💊 {shop['name']}"):
+                    st.write(f"📍 **Address:** {shop['address']}")
+                    st.write(f"📞 **Phone:** {shop['phone']}")
+                    st.markdown(f"[🗺️ Get Directions]({shop['directions']})")
+        else:
+            st.error("No medical shops found nearby.")
 
 
 if __name__ == "__main__":
